@@ -101,8 +101,11 @@ public class Bot extends TelegramLongPollingBot {
         // create the first row of buttons
         KeyboardRow firstRowOfButtons = new KeyboardRow();
         // adding a button to the first row
-        firstRowOfButtons.add(new KeyboardButton("/help"));
-        firstRowOfButtons.add(new KeyboardButton("/settings"));
+//        firstRowOfButtons.add(new KeyboardButton("/help"));
+//        firstRowOfButtons.add(new KeyboardButton("/settings"));
+        firstRowOfButtons.add(new KeyboardButton("saint petersburg"));
+        firstRowOfButtons.add(new KeyboardButton("moscow"));
+        firstRowOfButtons.add(new KeyboardButton("london"));
 
         // adding the first row to the keyboard rows list
         listOfButtonRows.add(firstRowOfButtons);

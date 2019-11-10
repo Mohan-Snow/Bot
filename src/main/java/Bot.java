@@ -9,10 +9,12 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.Keyboard
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class Bot extends TelegramLongPollingBot {
+
     public static void main(String[] args) {
 
         // initializing the API
@@ -30,6 +32,7 @@ public class Bot extends TelegramLongPollingBot {
     }
 
     public void onUpdateReceived(Update update) {
+        WeatherModel model = new WeatherModel();
         Message message = update.getMessage();
 
         if (message != null && message.hasText()) {
@@ -41,7 +44,11 @@ public class Bot extends TelegramLongPollingBot {
                     sendMsg(message, "Let's tweak something");
                     break;
                 default:
-
+                    try {
+                        sendMsg(message, Weather.getWeather(message.getText(), model));
+                    } catch (IOException e) {
+                        sendMsg(message, "This city wasn't found");
+                    }
             }
         }
     }
@@ -50,7 +57,6 @@ public class Bot extends TelegramLongPollingBot {
     public String getBotToken() {
         return "1026962314:AAFsHLZBFi6SULRPVjsJv_vucMFQNJ9MqRY";
     }
-
 
     // Метод для того, чтобы вернуть имя бота указанного при регистрации
     public String getBotUsername() {
@@ -103,6 +109,5 @@ public class Bot extends TelegramLongPollingBot {
 
         // attach created keyboard to the markup
         replyKeyboardMarkup.setKeyboard(listOfButtonRows);
-
     }
 }

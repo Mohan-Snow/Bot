@@ -32,8 +32,9 @@ public class Bot extends TelegramLongPollingBot {
     }
 
     public void onUpdateReceived(Update update) {
-        WeatherModel model = new WeatherModel();
+        // persist user response
         Message message = update.getMessage();
+
 
         if (message != null && message.hasText()) {
             switch (message.getText()) {
@@ -45,23 +46,41 @@ public class Bot extends TelegramLongPollingBot {
                     break;
                 default:
                     try {
-                        sendMsg(message, Weather.getWeather(message.getText(), model));
+                        sendMsg(message, Weather.getWeather(message));
                     } catch (IOException e) {
-                        sendMsg(message, "This city wasn't found");
+                        e.printStackTrace();
                     }
+            }
+        } else {
+            try {
+                sendMsg(message, Weather.getWeather(message));
+            } catch (IOException e) {
+                e.printStackTrace();
             }
         }
     }
 
-    // Возвращает токен бота
     public String getBotToken() {
         return "1026962314:AAFsHLZBFi6SULRPVjsJv_vucMFQNJ9MqRY";
     }
 
-    // Метод для того, чтобы вернуть имя бота указанного при регистрации
     public String getBotUsername() {
         return "WeatherBot";
     }
+
+//    public void sendLoc(Message message) {
+//        SendLocation sendLocation = new SendLocation();
+//
+//        sendLocation.setChatId(message.getChatId().toString());
+//        sendLocation.setLatitude(message.getLocation().getLatitude());
+//        sendLocation.setLongitude(message.getLocation().getLongitude());
+//
+//        try {
+//            sendApiMethod(sendLocation);
+//        } catch (TelegramApiException e) {
+//            e.printStackTrace();
+//        }
+//    }
 
     public void sendMsg(Message message, String text) {
         SendMessage sendMessage = new SendMessage();
@@ -101,14 +120,17 @@ public class Bot extends TelegramLongPollingBot {
         // create the first row of buttons
         KeyboardRow firstRowOfButtons = new KeyboardRow();
         // adding a button to the first row
-//        firstRowOfButtons.add(new KeyboardButton("/help"));
-//        firstRowOfButtons.add(new KeyboardButton("/settings"));
-        firstRowOfButtons.add(new KeyboardButton("saint petersburg"));
-        firstRowOfButtons.add(new KeyboardButton("moscow"));
-        firstRowOfButtons.add(new KeyboardButton("london"));
+        firstRowOfButtons.add(new KeyboardButton("/help"));
+        firstRowOfButtons.add(new KeyboardButton("/settings"));
+
+        KeyboardRow secondRowOfButtons = new KeyboardRow();
+        secondRowOfButtons.add(new KeyboardButton("Saint Petersburg"));
+        secondRowOfButtons.add(new KeyboardButton("Moscow"));
+        secondRowOfButtons.add(new KeyboardButton("London"));
 
         // adding the first row to the keyboard rows list
         listOfButtonRows.add(firstRowOfButtons);
+        listOfButtonRows.add(secondRowOfButtons);
 
         // attach created keyboard to the markup
         replyKeyboardMarkup.setKeyboard(listOfButtonRows);

@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
+//TODO modify
 public class BotProfile {
 
     private String botUsername;

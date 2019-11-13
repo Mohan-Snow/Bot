@@ -1,5 +1,6 @@
 package com.itmo.bot;
 
+import com.itmo.bot.services.WeatherAccessService;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
@@ -47,14 +48,15 @@ public class Bot extends TelegramLongPollingBot {
                     break;
                 default:
                     try {
-                        sendMsg(message, Weather.getWeather(message, appid));
+                        sendMsg(message, new WeatherAccessService(message, appid).getWeather());
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
             }
         } else {
             try {
-                sendMsg(message, Weather.getWeather(message, appid));
+//                sendMsg(message, Weather.getWeather(message, appid));
+                sendMsg(message, new WeatherAccessService(message, appid).getWeather());
             } catch (IOException e) {
                 e.printStackTrace();
             }

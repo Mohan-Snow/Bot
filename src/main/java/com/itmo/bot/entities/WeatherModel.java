@@ -1,3 +1,5 @@
+package com.itmo.bot.entities;
+
 public class WeatherModel {
 
     private String name;

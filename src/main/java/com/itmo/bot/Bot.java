@@ -1,6 +1,6 @@
-import org.telegram.telegrambots.ApiContextInitializer;
+package com.itmo.bot;
+
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
-import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
@@ -15,22 +15,23 @@ import java.util.List;
 
 public class Bot extends TelegramLongPollingBot {
 
-    public static void main(String[] args) {
+    private String token;
+    private String name;
+    private String appid;
 
-        // initializing the API
-        ApiContextInitializer.init();
-        // creating the Telegram API object
-        TelegramBotsApi telegramBotsApi = new TelegramBotsApi();
-
-        // then register the bot
-        try {
-            telegramBotsApi.registerBot(new Bot());
-        } catch (TelegramApiException e) {
-            System.out.println(e.getMessage());
-            e.printStackTrace();
-        }
+    public void setToken(String token) {
+        this.token = token;
     }
 
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setAppid(String appid) {
+        this.appid = appid;
+    }
+
+    @Override
     public void onUpdateReceived(Update update) {
         // persist user response
         Message message = update.getMessage();
@@ -46,53 +47,43 @@ public class Bot extends TelegramLongPollingBot {
                     break;
                 default:
                     try {
-                        sendMsg(message, Weather.getWeather(message));
+                        sendMsg(message, Weather.getWeather(message, appid));
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
             }
         } else {
             try {
-                sendMsg(message, Weather.getWeather(message));
+                sendMsg(message, Weather.getWeather(message, appid));
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
     }
 
+    @Override
     public String getBotToken() {
-        return "1026962314:AAFsHLZBFi6SULRPVjsJv_vucMFQNJ9MqRY";
+        return this.token;
     }
 
+    @Override
     public String getBotUsername() {
-        return "WeatherBot";
+        return this.name;
     }
 
-//    public void sendLoc(Message message) {
-//        SendLocation sendLocation = new SendLocation();
-//
-//        sendLocation.setChatId(message.getChatId().toString());
-//        sendLocation.setLatitude(message.getLocation().getLatitude());
-//        sendLocation.setLongitude(message.getLocation().getLongitude());
-//
-//        try {
-//            sendApiMethod(sendLocation);
-//        } catch (TelegramApiException e) {
-//            e.printStackTrace();
-//        }
-//    }
-
+    // send response back to user
     public void sendMsg(Message message, String text) {
         SendMessage sendMessage = new SendMessage();
 
-        sendMessage.enableMarkdown(true);
-        sendMessage.setChatId(message.getChatId().toString());
-        sendMessage.setReplyToMessageId(message.getMessageId());
-        sendMessage.setText(text);
+        sendMessage.enableMarkdown(true)
+                .setChatId(message.getChatId().toString())
+                .setReplyToMessageId(message.getMessageId())
+                .setText(text);
 
         try {
             // invoking the setButtons method to attach the keyboard
-            setButtons(sendMessage);
+//            setButtons(sendMessage);
+
             // sends the pre-defined text to the user
             sendApiMethod(sendMessage);
         } catch (TelegramApiException e) {

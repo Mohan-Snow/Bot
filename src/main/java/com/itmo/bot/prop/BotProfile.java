@@ -1,6 +1,6 @@
 package com.itmo.bot.prop;
 
-import com.itmo.bot.Main;
+import com.itmo.bot.BootstrapClass;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -14,7 +14,7 @@ public class BotProfile {
     private static volatile BotProfile botInstance;
 
     private BotProfile() {
-        try (InputStream input = Main.class.getClassLoader().getResourceAsStream("config.properties")) {
+        try (InputStream input = BootstrapClass.class.getClassLoader().getResourceAsStream("config.properties")) {
 
             Properties properties = new Properties();
             properties.load(input);

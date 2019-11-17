@@ -1,6 +1,5 @@
 package com.itmo.bot;
 
-import com.itmo.bot.prop.BotProfile;
 import org.telegram.telegrambots.ApiContextInitializer;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
@@ -9,7 +8,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
-public class Main {
+public class BootstrapClass {
 
     public static void main(String[] args) {
 
@@ -20,7 +19,7 @@ public class Main {
 
         try {
             Bot bot = new Bot();
-            try (InputStream input = Main.class.getClassLoader().getResourceAsStream("config.properties")) {
+            try (InputStream input = BootstrapClass.class.getClassLoader().getResourceAsStream("config.properties")) {
 
                 Properties properties = new Properties();
                 properties.load(input);
@@ -32,8 +31,8 @@ public class Main {
                 e.printStackTrace();
             }
 
-            System.out.println(bot.getBotUsername());
-            System.out.println(bot.getBotToken());
+//            System.out.println(bot.getBotUsername());
+//            System.out.println(bot.getBotToken());
 
             // then register the bot
             telegramBotsApi.registerBot(bot);

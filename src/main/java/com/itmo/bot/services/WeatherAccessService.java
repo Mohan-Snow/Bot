@@ -1,6 +1,7 @@
 package com.itmo.bot.services;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.itmo.bot.BotConfig;
 import com.itmo.bot.entities.jsonentities.WeatherModel;
 import org.telegram.telegrambots.meta.api.objects.Message;
 
@@ -12,51 +13,48 @@ import java.util.Scanner;
 
 public class WeatherAccessService {
 
-    private Message message;
-    private String weatherAppid;
+    private static volatile WeatherAccessService instance; // Instance for this class
 
-    public WeatherAccessService(Message message, String weatherAppid) {
-        this.message = message;
-        this.weatherAppid = weatherAppid;
+    private WeatherAccessService() {
     }
 
-    public String getWeather() throws IOException {
-//        WeatherModel model = new WeatherModel();
+    public static WeatherAccessService getInstance() {
+        WeatherAccessService currentInstance;
 
-        // casting the outer json object
-//        JSONObject wholeJSON = new JSONObject(getResultSetFromUrl());
+        if (instance == null) {
 
-//        model.setName(wholeJSON.getString("name"));
-//        JSONObject mainJSON = wholeJSON.getJSONObject("main");
+            synchronized (WeatherAccessService.class) {
+                if (instance == null) {
+                    instance = new WeatherAccessService();
+                }
+                currentInstance = instance;
+            }
+        } else {
+            currentInstance = instance;
+        }
+        return currentInstance;
+    }
 
-//        model.setTemperature(mainJSON.getDouble("temp"));
-//        model.setHumidity(mainJSON.getDouble("humidity"));
+    public String getWeather(Message message) throws IOException {
 
-        // putting data into array to get to the sub-json
-//        JSONArray jsonArray = wholeJSON.getJSONArray("weather");
-//        for (int i = 0; i < jsonArray.length(); i++) {
-//            JSONObject obj = jsonArray.getJSONObject(i);
-//            model.setIcon((String) obj.get("icon"));
-//            model.setMain((String) obj.get("main"));
-//        }
+        WeatherModel model = retrieveDataFromJson(message);
 
-
-        WeatherModel model = retrieveDataFromJson();
+        System.out.println(model.getName() + "\n" +
+                "id: " + model.getId() + "\n" +
+                "timezone: " + model.getTimezone());
 
 
         return "Location: " + model.getName() + "\n" +
                 "temperature: " + model.getMain().getTemp() + "C" + "\n";
-
-        // "http://openweathermap.org/img/wn/" + model.getWeather()[3] + ".png"
     }
 
-    private WeatherModel retrieveDataFromJson() throws IOException {
-        String input = getResultSetFromUrl();
+    private WeatherModel retrieveDataFromJson(Message message) throws IOException {
+        String input = getResultSetFromUrl(message);
         return new ObjectMapper().readValue(input, WeatherModel.class);
     }
 
-    private String getResultSetFromUrl() throws IOException {
-        URL url = getUrlForLocation();
+    private String getResultSetFromUrl(Message message) throws IOException {
+        URL url = getUrlForLocation(message);
 
         // scanner reads file.json content
         Scanner in = new Scanner((InputStream) url.getContent());
@@ -68,15 +66,19 @@ public class WeatherAccessService {
         return result;
     }
 
-    private URL getUrlForLocation() throws MalformedURLException {
+    private URL getUrlForLocation(Message message) throws MalformedURLException {
         float latitude = message.getLocation().getLatitude();
         float longitude = message.getLocation().getLongitude();
+
+        // suits for retrieving data from properties
+//        String.format()
 
         System.out.println(latitude);
         System.out.println(longitude);
 
         // url that process our get query
         return new URL("https://api.openweathermap.org/data/2.5/weather?lat="
-                + latitude + "&lon=" + longitude + "&units=metric&appid=" + weatherAppid);
+                + latitude + "&lon=" + longitude + "&units=metric&appid=" + BotConfig.WEATHER_APPID);
+        // https://api.openweathermap.org/data/2.5/weather?lat=59.926983&lon=30.361164&units=metric&appid=4ddaaaf244cde3a27fb9d8daaeba1f5d
     }
 }

@@ -16,29 +16,23 @@ import java.util.List;
 
 public class Bot extends TelegramLongPollingBot {
 
-    private String token;
-    private String name;
-    private String appid;
-
-    public void setToken(String token) {
-        this.token = token;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public void setAppid(String appid) {
-        this.appid = appid;
-    }
-
     @Override
     public void onUpdateReceived(Update update) {
-        // persist user response
-        Message message = update.getMessage();
 
+        // retrieve user response
+        if (update.hasMessage()) {
+            new Thread(() -> {
+                Message message = update.getMessage();
 
-        if (message != null && message.hasText()) {
+                try {
+                    sendMsg(message, WeatherAccessService.getInstance().getWeather(message));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }).start();
+        }
+
+        /*if (message != null && message.hasText()) {
             switch (message.getText()) {
                 case "/help":
                     sendMsg(message, "Ready to help");
@@ -48,29 +42,28 @@ public class Bot extends TelegramLongPollingBot {
                     break;
                 default:
                     try {
-                        sendMsg(message, new WeatherAccessService(message, appid).getWeather());
+                        sendMsg(message, WeatherAccessService.getInstance().getWeather(message));
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
             }
         } else {
             try {
-//                sendMsg(message, Weather.getWeather(message, appid));
-                sendMsg(message, new WeatherAccessService(message, appid).getWeather());
+                sendMsg(message, WeatherAccessService.getInstance().getWeather(message));
             } catch (IOException e) {
                 e.printStackTrace();
             }
-        }
+        }*/
     }
 
     @Override
     public String getBotToken() {
-        return this.token;
+        return BotConfig.WEATHER_TOKEN;
     }
 
     @Override
     public String getBotUsername() {
-        return this.name;
+        return BotConfig.WEATHER_NAME;
     }
 
     // send response back to user
@@ -78,6 +71,7 @@ public class Bot extends TelegramLongPollingBot {
         SendMessage sendMessage = new SendMessage();
 
         sendMessage.enableMarkdown(true)
+                .setChatId("")
                 .setChatId(message.getChatId().toString())
                 .setReplyToMessageId(message.getMessageId())
                 .setText(text);

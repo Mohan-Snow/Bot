@@ -13,15 +13,8 @@ import java.util.Optional;
 @Component
 public class MappingUserService implements Dao<User> {
 
-    private UserRepo userRepo;
-
-    public MappingUserService() {
-    }
-
     @Autowired
-    public MappingUserService(UserRepo userRepo) {
-        this.userRepo = userRepo;
-    }
+    private UserRepo userRepo;
 
     @Override
     public Optional<User> get(long id) {

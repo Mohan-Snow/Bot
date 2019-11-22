@@ -32,11 +32,16 @@ public class Bot extends TelegramLongPollingBot {
                 Message message = update.getMessage();
 
                 if (message.hasLocation()) {
+                    service = new MappingUserService();
 
-                    User user = new User("Test Name#1",
+                    User user = new User(message.getChat().getUserName(),
                             new Location(message.getLocation().getLatitude(), message.getLocation().getLatitude()),
                             message.getChatId());
 
+
+                    System.out.println("User: " + user.getUsername() + "\n" +
+                            "chat id: " + user.getChatId() + "\n" +
+                            "location: " + user.getLocation().getLatitude() + ":" + user.getLocation().getLongitude());
 
                     try {
                         service.save(user);
@@ -44,6 +49,8 @@ public class Bot extends TelegramLongPollingBot {
                         System.out.println("Service null...again T_T " + e.getMessage());
                     }
 
+
+                    // processing user request >>
                     try {
                         sendMsg(message, WeatherAccess.getInstance().getWeather(message));
                     } catch (IOException e) {

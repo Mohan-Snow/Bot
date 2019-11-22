@@ -3,16 +3,20 @@ package com.itmo.bot.services.database;
 import com.itmo.bot.entities.User;
 import com.itmo.bot.repos.UserRepo;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-@Service
+@Component
 public class MappingUserService implements Dao<User> {
 
     private UserRepo userRepo;
+
+    public MappingUserService() {
+    }
 
     @Autowired
     public MappingUserService(UserRepo userRepo) {

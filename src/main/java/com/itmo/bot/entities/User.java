@@ -1,11 +1,13 @@
 package com.itmo.bot.entities;
 
 import org.springframework.data.annotation.Id;
+import org.springframework.stereotype.Component;
 
 import javax.persistence.*;
 
 @Entity
 @Table(name = "users")
+@Component
 public class User {
 
     @Id
@@ -14,14 +16,13 @@ public class User {
     @Column(name = "names")
     private String username;
     @Column(name = "locations")
-    private String location;
+    private Location location;
     private long chatId;
 
     public User() {
     }
 
-    public User(long id, String username, String location, long chatId) {
-        this.id = id;
+    public User(String username, Location location, long chatId) {
         this.username = username;
         this.location = location;
         this.chatId = chatId;
@@ -43,11 +44,11 @@ public class User {
         this.username = username;
     }
 
-    public String getLocation() {
+    public Location getLocation() {
         return location;
     }
 
-    public void setLocation(String location) {
+    public void setLocation(Location location) {
         this.location = location;
     }
 

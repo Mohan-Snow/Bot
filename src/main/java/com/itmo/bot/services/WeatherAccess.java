@@ -11,21 +11,22 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Scanner;
 
-public class WeatherAccessService {
+public class WeatherAccess {
 
-    private static volatile WeatherAccessService instance; // Instance for this class
+    private static volatile WeatherAccess instance; // Instance for this class
+    private Message message;
 
-    private WeatherAccessService() {
+    private WeatherAccess() {
     }
 
-    public static WeatherAccessService getInstance() {
-        WeatherAccessService currentInstance;
+    public static WeatherAccess getInstance() {
+        WeatherAccess currentInstance;
 
         if (instance == null) {
 
-            synchronized (WeatherAccessService.class) {
+            synchronized (WeatherAccess.class) {
                 if (instance == null) {
-                    instance = new WeatherAccessService();
+                    instance = new WeatherAccess();
                 }
                 currentInstance = instance;
             }
@@ -37,7 +38,9 @@ public class WeatherAccessService {
 
     public String getWeather(Message message) throws IOException {
 
-        WeatherModel model = retrieveDataFromJson(message);
+        this.message = message;
+
+        WeatherModel model = retrieveDataFromJson();
 
         System.out.println(model.getName() + "\n" +
                 "id: " + model.getId() + "\n" +
@@ -48,13 +51,25 @@ public class WeatherAccessService {
                 "temperature: " + model.getMain().getTemp() + "C" + "\n";
     }
 
-    private WeatherModel retrieveDataFromJson(Message message) throws IOException {
-        String input = getResultSetFromUrl(message);
+    private WeatherModel retrieveDataFromJson() throws IOException {
+        String input = getResultSetFromUrl();
         return new ObjectMapper().readValue(input, WeatherModel.class);
     }
 
-    private String getResultSetFromUrl(Message message) throws IOException {
-        URL url = getUrlForLocation(message);
+    private String getResultSetFromUrl() throws IOException {
+        URL url;
+
+        if (message.hasText()) {
+            url = getUrlForText(message.getText().toLowerCase());
+
+        } else if (message.hasLocation()) {
+            float latitude = message.getLocation().getLatitude();
+            float longitude = message.getLocation().getLongitude();
+
+            url = getUrlForLocation(latitude, longitude);
+        } else {
+            return null;
+        }
 
         // scanner reads file.json content
         Scanner in = new Scanner((InputStream) url.getContent());
@@ -66,19 +81,20 @@ public class WeatherAccessService {
         return result;
     }
 
-    private URL getUrlForLocation(Message message) throws MalformedURLException {
-        float latitude = message.getLocation().getLatitude();
-        float longitude = message.getLocation().getLongitude();
+    private URL getUrlForLocation(float latitude, float longitude) throws MalformedURLException {
+
 
         // suits for retrieving data from properties
 //        String.format()
-
-        System.out.println(latitude);
-        System.out.println(longitude);
 
         // url that process our get query
         return new URL("https://api.openweathermap.org/data/2.5/weather?lat="
                 + latitude + "&lon=" + longitude + "&units=metric&appid=" + BotConfig.WEATHER_APPID);
         // https://api.openweathermap.org/data/2.5/weather?lat=59.926983&lon=30.361164&units=metric&appid=4ddaaaf244cde3a27fb9d8daaeba1f5d
+    }
+
+    private static URL getUrlForText(String city) throws MalformedURLException {
+        return new URL("https://api.openweathermap.org/data/2.5/weather?q=" +
+                city + "&units=metric&appid=4ddaaaf244cde3a27fb9d8daaeba1f5d");
     }
 }

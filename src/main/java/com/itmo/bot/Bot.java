@@ -1,6 +1,10 @@
 package com.itmo.bot;
 
-import com.itmo.bot.services.WeatherAccessService;
+import com.itmo.bot.entities.Location;
+import com.itmo.bot.entities.User;
+import com.itmo.bot.services.WeatherAccess;
+import com.itmo.bot.services.database.MappingUserService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
@@ -16,44 +20,57 @@ import java.util.List;
 
 public class Bot extends TelegramLongPollingBot {
 
+    @Autowired
+    private MappingUserService service;
+
     @Override
     public void onUpdateReceived(Update update) {
 
-        // retrieve user response
+        // retrieve user request
         if (update.hasMessage()) {
             new Thread(() -> {
                 Message message = update.getMessage();
 
-                try {
-                    sendMsg(message, WeatherAccessService.getInstance().getWeather(message));
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }).start();
-        }
+                if (message.hasLocation()) {
 
-        /*if (message != null && message.hasText()) {
-            switch (message.getText()) {
-                case "/help":
-                    sendMsg(message, "Ready to help");
-                    break;
-                case "/settings":
-                    sendMsg(message, "Let's tweak something");
-                    break;
-                default:
+                    User user = new User("Test Name#1",
+                            new Location(message.getLocation().getLatitude(), message.getLocation().getLatitude()),
+                            message.getChatId());
+
+
                     try {
-                        sendMsg(message, WeatherAccessService.getInstance().getWeather(message));
+                        service.save(user);
+                    } catch (NullPointerException e) {
+                        System.out.println("Service null...again T_T " + e.getMessage());
+                    }
+
+                    try {
+                        sendMsg(message, WeatherAccess.getInstance().getWeather(message));
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
-            }
-        } else {
-            try {
-                sendMsg(message, WeatherAccessService.getInstance().getWeather(message));
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }*/
+
+                } else if (message.hasText()) {
+
+                    switch (message.getText()) {
+                        case "/help":
+                            sendMsg(message, "Ready to help");
+                            break;
+                        case "/settings":
+                            sendMsg(message, "Let's tweak something");
+                            break;
+                        default:
+                            try {
+                                sendMsg(message, WeatherAccess.getInstance().getWeather(message));
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                    }
+                } else {
+                    sendMsg(message, "Something went wrong");
+                }
+            }).start();
+        }
     }
 
     @Override
@@ -78,7 +95,7 @@ public class Bot extends TelegramLongPollingBot {
 
         try {
             // invoking the setButtons method to attach the keyboard
-//            setButtons(sendMessage);
+            setButtons(sendMessage);
 
             // sends the pre-defined text to the user
             sendApiMethod(sendMessage);

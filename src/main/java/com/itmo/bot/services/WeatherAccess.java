@@ -1,7 +1,7 @@
 package com.itmo.bot.services;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.itmo.bot.BotConfig;
+import com.itmo.bot.config.BotConfig;
 import com.itmo.bot.entities.jsonentities.WeatherModel;
 import org.telegram.telegrambots.meta.api.objects.Message;
 

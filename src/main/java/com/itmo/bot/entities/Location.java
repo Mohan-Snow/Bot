@@ -1,14 +1,17 @@
 package com.itmo.bot.entities;
 
 import org.springframework.stereotype.Component;
+import javax.persistence.Id;
 
-import javax.persistence.Entity;
-import javax.persistence.Table;
+import javax.persistence.*;
 
-@Entity
-@Table(name = "locations")
-@Component
+//@Entity
+//@Table(name = "locations")
 public class Location {
+
+//    @Id
+//    @GeneratedValue(strategy = GenerationType.AUTO)
+    private long id;
 
     private float latitude;
     private float longitude;

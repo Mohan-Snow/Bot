@@ -1,20 +1,26 @@
-package com.itmo.bot.services.database;
+package com.itmo.bot.services;
 
 import com.itmo.bot.entities.User;
 import com.itmo.bot.repos.UserRepo;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-@Component
+@Service
 public class MappingUserService implements Dao<User> {
 
-    @Autowired
     private UserRepo userRepo;
+
+    public MappingUserService() {
+    }
+
+    @Autowired
+    public MappingUserService(UserRepo userRepo) {
+        this.userRepo = userRepo;
+    }
 
     @Override
     public Optional<User> get(long id) {

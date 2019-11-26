@@ -1,4 +1,4 @@
-package com.itmo.bot.services.database;
+package com.itmo.bot.services;
 
 import java.util.List;
 import java.util.Optional;

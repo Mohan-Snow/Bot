@@ -1,10 +1,14 @@
 package com.itmo.bot;
 
+import com.itmo.bot.config.BotConfig;
 import com.itmo.bot.entities.Location;
 import com.itmo.bot.entities.User;
+import com.itmo.bot.services.MappingUserService;
 import com.itmo.bot.services.WeatherAccess;
-import com.itmo.bot.services.database.MappingUserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
@@ -18,13 +22,21 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+@Component
+@Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
 public class Bot extends TelegramLongPollingBot {
 
     @Autowired
     private MappingUserService service;
 
+    public Bot() {
+        System.out.println("HASH FROM CONSTRUCTIOR: " + this.hashCode());
+    }
+
     @Override
     public void onUpdateReceived(Update update) {
+
+        System.out.println("HASH FORM onUpdateReceived: " + this.hashCode());
 
         // retrieve user request
         if (update.hasMessage()) {
@@ -32,21 +44,21 @@ public class Bot extends TelegramLongPollingBot {
                 Message message = update.getMessage();
 
                 if (message.hasLocation()) {
-                    service = new MappingUserService();
 
                     User user = new User(message.getChat().getUserName(),
                             new Location(message.getLocation().getLatitude(), message.getLocation().getLatitude()),
                             message.getChatId());
 
+//                    System.out.println("User: " + user.getUsername() + "\n" +
+//                            "chat id: " + user.getChatId() + "\n" +
+//                            "location: " + user.getLocation().getLatitude() + ":" + user.getLocation().getLongitude());
 
-                    System.out.println("User: " + user.getUsername() + "\n" +
-                            "chat id: " + user.getChatId() + "\n" +
-                            "location: " + user.getLocation().getLatitude() + ":" + user.getLocation().getLongitude());
 
                     try {
                         service.save(user);
+                        System.out.println("User saved!!!");
                     } catch (NullPointerException e) {
-                        System.out.println("Service null...again T_T " + e.getMessage());
+                        System.out.println("\nService null...again T_T\n" + e.getMessage());
                     }
 
 

@@ -1,13 +1,12 @@
 package com.itmo.bot;
 
-import com.itmo.bot.config.BotConfig;
 import com.itmo.bot.entities.Location;
 import com.itmo.bot.entities.User;
 import com.itmo.bot.services.MappingUserService;
 import com.itmo.bot.services.WeatherAccess;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -23,11 +22,19 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Component
-@Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
+@PropertySource("classpath:telegram.properties")
+//@Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
 public class Bot extends TelegramLongPollingBot {
+
+    @Value("${bot.name}")
+    private String botName;
+    @Value("${bot.token}")
+    private String botToken;
 
     @Autowired
     private MappingUserService service;
+    @Autowired
+    private WeatherAccess weatherAccess;
 
     public Bot() {
         System.out.println("HASH FROM CONSTRUCTIOR: " + this.hashCode());
@@ -36,13 +43,14 @@ public class Bot extends TelegramLongPollingBot {
     @Override
     public void onUpdateReceived(Update update) {
 
-        System.out.println("HASH FORM onUpdateReceived: " + this.hashCode());
+        System.out.println("HASH FORM onUpdateReceived (before the thread) : " + this.hashCode());
 
         // retrieve user request
         if (update.hasMessage()) {
             new Thread(() -> {
                 Message message = update.getMessage();
 
+                System.out.println("HASH FORM onUpdateReceived (after the thread) : " + this.hashCode());
                 if (message.hasLocation()) {
 
                     User user = new User(message.getChat().getUserName(),
@@ -64,7 +72,7 @@ public class Bot extends TelegramLongPollingBot {
 
                     // processing user request >>
                     try {
-                        sendMsg(message, WeatherAccess.getInstance().getWeather(message));
+                        sendMsg(message, weatherAccess.getWeather(message));
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -80,7 +88,7 @@ public class Bot extends TelegramLongPollingBot {
                             break;
                         default:
                             try {
-                                sendMsg(message, WeatherAccess.getInstance().getWeather(message));
+                                sendMsg(message, weatherAccess.getWeather(message));
                             } catch (IOException e) {
                                 e.printStackTrace();
                             }
@@ -94,12 +102,12 @@ public class Bot extends TelegramLongPollingBot {
 
     @Override
     public String getBotToken() {
-        return BotConfig.WEATHER_TOKEN;
+        return botToken;
     }
 
     @Override
     public String getBotUsername() {
-        return BotConfig.WEATHER_NAME;
+        return botName;
     }
 
     // send response back to user

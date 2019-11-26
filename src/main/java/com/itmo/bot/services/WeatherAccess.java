@@ -3,6 +3,9 @@ package com.itmo.bot.services;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.itmo.bot.config.BotConfig;
 import com.itmo.bot.entities.jsonentities.WeatherModel;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.PropertySource;
+import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.Message;
 
 import java.io.IOException;
@@ -11,30 +14,34 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Scanner;
 
+@Component
+@PropertySource("classpath:telegram.properties")
 public class WeatherAccess {
 
-    private static volatile WeatherAccess instance; // Instance for this class
+    @Value("${weather.appid}")
+    private String weatherAppid;
     private Message message;
+//    private static volatile WeatherAccess instance; // Instance for this class
 
-    private WeatherAccess() {
-    }
-
-    public static WeatherAccess getInstance() {
-        WeatherAccess currentInstance;
-
-        if (instance == null) {
-
-            synchronized (WeatherAccess.class) {
-                if (instance == null) {
-                    instance = new WeatherAccess();
-                }
-                currentInstance = instance;
-            }
-        } else {
-            currentInstance = instance;
-        }
-        return currentInstance;
-    }
+//    private WeatherAccess() {
+//    }
+//
+//    public static WeatherAccess getInstance() {
+//        WeatherAccess currentInstance;
+//
+//        if (instance == null) {
+//
+//            synchronized (WeatherAccess.class) {
+//                if (instance == null) {
+//                    instance = new WeatherAccess();
+//                }
+//                currentInstance = instance;
+//            }
+//        } else {
+//            currentInstance = instance;
+//        }
+//        return currentInstance;
+//    }
 
     public String getWeather(Message message) throws IOException {
 
@@ -89,7 +96,7 @@ public class WeatherAccess {
 
         // url that process our get query
         return new URL("https://api.openweathermap.org/data/2.5/weather?lat="
-                + latitude + "&lon=" + longitude + "&units=metric&appid=" + BotConfig.WEATHER_APPID);
+                + latitude + "&lon=" + longitude + "&units=metric&appid=" + weatherAppid);
         // https://api.openweathermap.org/data/2.5/weather?lat=59.926983&lon=30.361164&units=metric&appid=4ddaaaf244cde3a27fb9d8daaeba1f5d
     }
 

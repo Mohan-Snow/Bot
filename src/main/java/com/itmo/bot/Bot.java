@@ -36,17 +36,15 @@ public class Bot extends TelegramLongPollingBot {
     private Location location;
 
     private UserService service;
-    private WeatherAccess weatherAccess;
-    private NotificationService notificationService;
+    private WeatherAccess<Object> weatherAccess;
 
     public Bot() {
     }
 
     @Autowired
-    public Bot(UserService userService, WeatherAccess weatherAccess, NotificationService notificationService) {
+    public Bot(UserService userService, WeatherAccess<Object> weatherAccess) {
         this.service = userService;
         this.weatherAccess = weatherAccess;
-        this.notificationService = notificationService;
     }
 
     @Override
@@ -67,7 +65,7 @@ public class Bot extends TelegramLongPollingBot {
 
                     // processing user request >>
                     try {
-                        sendMsg(message, weatherAccess.getWeather(null, location));
+                        sendMsg(message, weatherAccess.getCurrentForecast(location));
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -81,7 +79,7 @@ public class Bot extends TelegramLongPollingBot {
                         case "/settings":
                             sendMsg(message, "Let's tweak something");
                             break;
-                        case "subscribe": //TODO: fix saving users
+                        case "subscribe": //TODO: fix saving user boolean type
                             user = getUserByChatId(message.getChatId());
 
                             if (user != null) {
@@ -99,7 +97,7 @@ public class Bot extends TelegramLongPollingBot {
                             break;
                         default:
                             try {
-                                sendMsg(message, weatherAccess.getWeather(message, null));
+                                sendMsg(message, weatherAccess.getCurrentForecast(message));
                             } catch (IOException e) {
                                 e.printStackTrace();
                             }
@@ -203,6 +201,7 @@ public class Bot extends TelegramLongPollingBot {
         replyKeyboardMarkup.setKeyboard(listOfButtonRows);
     }
 
+//    @Scheduled(fixedRate = 50000)
     @Scheduled(cron = "0 0 9 * * *")
     public void sendForecast() throws IOException {
         List<User> users = service.getAll();
@@ -212,7 +211,7 @@ public class Bot extends TelegramLongPollingBot {
         for (User u : users) {
             if (!u.isSubscriber()) continue;
 
-            String forecast = weatherAccess.getWeather(null, u.getLocation());
+            String forecast = weatherAccess.getForecastForThisDay(u.getLocation());
             SendMessage sendMessage = new SendMessage();
 
             sendMessage.enableMarkdown(true)

@@ -16,25 +16,22 @@ import java.util.Scanner;
 
 @Service
 @PropertySource("classpath:telegram.properties")
-public class WeatherAccess {
+public class WeatherAccess<T> {
 
     @Value("${weather.appid}")
     private String weatherAppid;
-    private Message message;
-    private Location location;
-    
-    public String getWeather(Message message, Location location) throws IOException {
-        this.message = message;
-        this.location = location;
 
-        WeatherModel model;
+    public String getForecastForThisDay(T type) throws IOException {
+        WeatherModel model = retrieveDataFromJson(type);
 
-        try {
-            model = retrieveDataFromJson();
-        } catch (NullPointerException e) {
-            System.out.println(e.getMessage());
-            return "Something went wrong with accessing weather service";
-        }
+        return "Location: " + model.getName() + "\n" +
+                "temperature varies from : " + (int) model.getMain().getTemp_min() +
+                " to " + (int) model.getMain().getTemp_max() + " C" + "\n" +
+                "Description: " + model.getWeather()[0].getDescription();
+    }
+
+    public String getCurrentForecast(T type) throws IOException {
+        WeatherModel model = retrieveDataFromJson(type);
 
         return "Location: " + model.getName() + "\n" +
                 "temperature: " + (int) model.getMain().getTemp() + " C" + "\n" +
@@ -42,11 +39,12 @@ public class WeatherAccess {
     }
 
 
-    private WeatherModel retrieveDataFromJson() throws IOException {
+    private WeatherModel retrieveDataFromJson(T type) throws IOException {
+
         String input;
 
         try {
-            input = getResultSetFromUrl();
+            input = getResultSetFromUrl(type);
         } catch (NullPointerException e) {
             System.out.println(e.getMessage());
             return null;
@@ -54,16 +52,16 @@ public class WeatherAccess {
         return new ObjectMapper().readValue(input, WeatherModel.class);
     }
 
-    private String getResultSetFromUrl() throws IOException {
+    private String getResultSetFromUrl(T objectType) throws IOException {
         URL url;
 
-        if (message != null) {
+        if (objectType instanceof Message) {
             System.out.println("message");
-            url = getUrlForText(message.getText().toLowerCase());
+            url = getUrlForText(((Message) objectType).getText().toLowerCase());
 
-        } else if (location != null) {
-            float latitude = location.getLatitude();
-            float longitude = location.getLongitude();
+        } else if (objectType instanceof Location) {
+            float latitude = ((Location) objectType).getLatitude();
+            float longitude = ((Location) objectType).getLongitude();
 
             System.out.println("location data: " + latitude + " : " + longitude + "\n");
 
@@ -83,21 +81,15 @@ public class WeatherAccess {
     }
 
     private URL getUrlForLocation(float latitude, float longitude) throws MalformedURLException {
-
-
-        // suits for retrieving data from properties
-//        String.format()
+//      TODO: change to String.format()
 
         // url that process our get query
         return new URL("https://api.openweathermap.org/data/2.5/weather?lat="
                 + latitude + "&lon=" + longitude + "&units=metric&appid=" + weatherAppid);
-        // https://api.openweathermap.org/data/2.5/weather?lat=59.95239&lon=59.95239&units=metric&appid=4ddaaaf244cde3a27fb9d8daaeba1f5d
     }
 
     private static URL getUrlForText(String city) throws MalformedURLException {
         return new URL("https://api.openweathermap.org/data/2.5/weather?q=" +
                 city + "&units=metric&appid=4ddaaaf244cde3a27fb9d8daaeba1f5d");
-
-        // https://api.openweathermap.org/data/2.5/weather?q=london&units=metric&appid=4ddaaaf244cde3a27fb9d8daaeba1f5d
     }
 }

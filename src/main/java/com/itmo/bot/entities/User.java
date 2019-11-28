@@ -12,7 +12,7 @@ public class User {
 
     private long chatId;
     private String username;
-    private boolean subscriber = true;
+    private boolean subscriber;
 
     @OneToOne(targetEntity = Location.class, cascade = CascadeType.ALL, fetch = FetchType.EAGER)
 //    @JoinColumn(name = "id", referencedColumnName = "id")

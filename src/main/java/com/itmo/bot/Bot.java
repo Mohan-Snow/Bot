@@ -2,11 +2,13 @@ package com.itmo.bot;
 
 import com.itmo.bot.entities.Location;
 import com.itmo.bot.entities.User;
-import com.itmo.bot.services.MappingUserService;
+import com.itmo.bot.services.NotificationService;
+import com.itmo.bot.services.UserService;
 import com.itmo.bot.services.WeatherAccess;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -23,7 +25,6 @@ import java.util.List;
 
 @Component
 @PropertySource("classpath:telegram.properties")
-//@Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
 public class Bot extends TelegramLongPollingBot {
 
     @Value("${bot.name}")
@@ -31,48 +32,42 @@ public class Bot extends TelegramLongPollingBot {
     @Value("${bot.token}")
     private String botToken;
 
-    @Autowired
-    private MappingUserService service;
-    @Autowired
+    private User user;
+    private Location location;
+
+    private UserService service;
     private WeatherAccess weatherAccess;
+    private NotificationService notificationService;
 
     public Bot() {
-        System.out.println("HASH FROM CONSTRUCTIOR: " + this.hashCode());
+    }
+
+    @Autowired
+    public Bot(UserService userService, WeatherAccess weatherAccess, NotificationService notificationService) {
+        this.service = userService;
+        this.weatherAccess = weatherAccess;
+        this.notificationService = notificationService;
     }
 
     @Override
     public void onUpdateReceived(Update update) {
-
-        System.out.println("HASH FORM onUpdateReceived (before the thread) : " + this.hashCode());
 
         // retrieve user request
         if (update.hasMessage()) {
             new Thread(() -> {
                 Message message = update.getMessage();
 
-                System.out.println("HASH FORM onUpdateReceived (after the thread) : " + this.hashCode());
                 if (message.hasLocation()) {
 
-                    User user = new User(message.getChat().getUserName(),
-                            new Location(message.getLocation().getLatitude(), message.getLocation().getLatitude()),
-                            message.getChatId());
+                    location = new Location(message.getLocation().getLatitude(),
+                            message.getLocation().getLatitude());
 
-//                    System.out.println("User: " + user.getUsername() + "\n" +
-//                            "chat id: " + user.getChatId() + "\n" +
-//                            "location: " + user.getLocation().getLatitude() + ":" + user.getLocation().getLongitude());
-
-
-                    try {
-                        service.save(user);
-                        System.out.println("User saved!!!");
-                    } catch (NullPointerException e) {
-                        System.out.println("\nService null...again T_T\n" + e.getMessage());
-                    }
-
+                    // check user in database >>
+                    registerUser(message);
 
                     // processing user request >>
                     try {
-                        sendMsg(message, weatherAccess.getWeather(message));
+                        sendMsg(message, weatherAccess.getWeather(null, location));
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -86,9 +81,25 @@ public class Bot extends TelegramLongPollingBot {
                         case "/settings":
                             sendMsg(message, "Let's tweak something");
                             break;
+                        case "subscribe": //TODO: fix saving users
+                            user = getUserByChatId(message.getChatId());
+
+                            if (user != null) {
+                                System.out.println(user);
+                                if (user.isSubscriber()) {
+                                    sendMsg(message, "You're already a subscriber");
+                                    break;
+                                }
+                                user.setSubscriber(true);
+                                System.out.println("AFTER SET TRUE: " + user);
+                                sendMsg(message, "User Subscribed");
+                            } else {
+                                sendMsg(message, "You need to send your current location first");
+                            }
+                            break;
                         default:
                             try {
-                                sendMsg(message, weatherAccess.getWeather(message));
+                                sendMsg(message, weatherAccess.getWeather(message, null));
                             } catch (IOException e) {
                                 e.printStackTrace();
                             }
@@ -98,6 +109,30 @@ public class Bot extends TelegramLongPollingBot {
                 }
             }).start();
         }
+    }
+
+    private void registerUser(Message message) {
+        if (getUserByChatId(message.getChatId()) == null) {
+
+            user = new User(message.getChat().getUserName(),
+                    location, message.getChatId());
+            try {
+                service.save(user);
+            } catch (NullPointerException e) {
+                System.out.println("\nService null...again T_T\n" + e.getMessage());
+            }
+        }
+    }
+
+    private User getUserByChatId(Long chatId) {
+        for (User u : service.getAll()) {
+            if (u.getChatId() == chatId) {
+                System.out.println("\ngetUserByChatId >> " + u);
+                System.out.println("U EXIST");
+                return u;
+            }
+        }
+        return null;
     }
 
     @Override
@@ -153,6 +188,7 @@ public class Bot extends TelegramLongPollingBot {
         // adding a button to the first row
         firstRowOfButtons.add(new KeyboardButton("/help"));
         firstRowOfButtons.add(new KeyboardButton("/settings"));
+        firstRowOfButtons.add(new KeyboardButton("subscribe"));
 
         KeyboardRow secondRowOfButtons = new KeyboardRow();
         secondRowOfButtons.add(new KeyboardButton("Saint Petersburg"));
@@ -165,5 +201,30 @@ public class Bot extends TelegramLongPollingBot {
 
         // attach created keyboard to the markup
         replyKeyboardMarkup.setKeyboard(listOfButtonRows);
+    }
+
+    @Scheduled(cron = "0 0 9 * * *")
+    public void sendForecast() throws IOException {
+        List<User> users = service.getAll();
+
+        if (users.isEmpty()) return;
+
+        for (User u : users) {
+            if (!u.isSubscriber()) continue;
+
+            String forecast = weatherAccess.getWeather(null, u.getLocation());
+            SendMessage sendMessage = new SendMessage();
+
+            sendMessage.enableMarkdown(true)
+                    .setChatId("")
+                    .setChatId(u.getChatId())
+                    .setText(forecast);
+
+            try {
+                sendApiMethod(sendMessage);
+            } catch (TelegramApiException e) {
+                e.printStackTrace();
+            }
+        }
     }
 }

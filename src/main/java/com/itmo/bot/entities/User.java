@@ -1,8 +1,5 @@
 package com.itmo.bot.entities;
 
-import javax.persistence.Id;
-import org.springframework.stereotype.Component;
-
 import javax.persistence.*;
 
 @Entity
@@ -13,17 +10,22 @@ public class User {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private long id;
 
-    private String username;
-//    private Location location;
     private long chatId;
+    private String username;
+    private boolean subscriber = true;
+
+    @OneToOne(targetEntity = Location.class, cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+//    @JoinColumn(name = "id", referencedColumnName = "id")
+    private Location location;
+
 
     public User() {
     }
 
     public User(String username, Location location, long chatId) {
         this.username = username;
-//        this.location = location;
         this.chatId = chatId;
+        this.location = location;
     }
 
     public long getId() {
@@ -42,19 +44,38 @@ public class User {
         this.username = username;
     }
 
-//    public Location getLocation() {
-//        return location;
-//    }
-
-//    public void setLocation(Location location) {
-//        this.location = location;
-//    }
-
     public long getChatId() {
         return chatId;
     }
 
     public void setChatId(long chatId) {
         this.chatId = chatId;
+    }
+
+    public Location getLocation() {
+        return location;
+    }
+
+    public void setLocation(Location location) {
+        this.location = location;
+    }
+
+    public boolean isSubscriber() {
+        return subscriber;
+    }
+
+    public void setSubscriber(boolean subscriber) {
+        this.subscriber = subscriber;
+    }
+
+    @Override
+    public String toString() {
+        return "User{" +
+                "id=" + id +
+                ", chatId=" + chatId +
+                ", username='" + username + '\'' +
+                ", subscriber=" + subscriber +
+//                ", locations = " + location.getLatitude() + " : " + location.getLongitude() +
+                '}';
     }
 }

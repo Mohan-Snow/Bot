@@ -10,21 +10,21 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
-public class MappingUserService implements Dao<User> {
+public class UserService implements Dao<User> {
 
     private UserRepo userRepo;
 
-    public MappingUserService() {
+    public UserService() {
     }
 
     @Autowired
-    public MappingUserService(UserRepo userRepo) {
+    public UserService(UserRepo userRepo) {
         this.userRepo = userRepo;
     }
 
     @Override
     public Optional<User> get(long id) {
-        return Optional.empty();
+        return userRepo.findById(id);
     }
 
     @Override
@@ -40,6 +40,7 @@ public class MappingUserService implements Dao<User> {
     @Override
     public void save(User user) {
         userRepo.save(user);
+        System.out.println("USER SAVED");
     }
 
     @Override

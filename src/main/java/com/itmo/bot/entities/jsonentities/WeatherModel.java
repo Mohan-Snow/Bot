@@ -15,6 +15,8 @@ public class WeatherModel {
     private int id;
     private String name;
     private int cod;
+    private Rain rain;
+    private Snow snow;
 
     public Coord getCoord() {
         return coord;
@@ -118,5 +120,21 @@ public class WeatherModel {
 
     public void setCod(int cod) {
         this.cod = cod;
+    }
+
+    public Rain getRain() {
+        return rain;
+    }
+
+    public void setRain(Rain rain) {
+        this.rain = rain;
+    }
+
+    public Snow getSnow() {
+        return snow;
+    }
+
+    public void setSnow(Snow snow) {
+        this.snow = snow;
     }
 }

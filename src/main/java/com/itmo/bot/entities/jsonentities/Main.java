@@ -6,6 +6,8 @@ public class Main {
     private int humidity;
     private float temp_min;
     private float temp_max;
+    private int sea_level;
+    private int grnd_level;
 
     public double getTemp() {
         return temp;
@@ -45,5 +47,21 @@ public class Main {
 
     public void setTemp_max(float temp_max) {
         this.temp_max = temp_max;
+    }
+
+    public int getSea_level() {
+        return sea_level;
+    }
+
+    public void setSea_level(int sea_level) {
+        this.sea_level = sea_level;
+    }
+
+    public int getGrnd_level() {
+        return grnd_level;
+    }
+
+    public void setGrnd_level(int grnd_level) {
+        this.grnd_level = grnd_level;
     }
 }

@@ -1,4 +1,5 @@
 # Project exclude paths
 /target/
 /src/main/resources/telegram.properties
+/src/main/resources/application.properties
 /src/main/java/com/itmo/bot/BotConfig.class

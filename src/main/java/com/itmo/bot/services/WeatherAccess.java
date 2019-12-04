@@ -8,8 +8,11 @@ import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.objects.Message;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Scanner;
@@ -23,15 +26,17 @@ public class WeatherAccess<T> {
 
     public String getForecastForThisDay(T type) throws IOException {
         WeatherModel model = retrieveDataFromJson(type);
+        assert model != null;
 
         return "Location: " + model.getName() + "\n" +
                 "temperature varies from : " + (int) model.getMain().getTemp_min() +
-                " to " + (int) model.getMain().getTemp_max() + " C" + "\n" +
+                " to " + (int) model.getMain().getTemp_max() + "℃" + "\n" +
                 "Description: " + model.getWeather()[0].getDescription();
     }
 
     public String getCurrentForecast(T type) throws IOException {
         WeatherModel model = retrieveDataFromJson(type);
+        assert model != null;
 
         return "Location: " + model.getName() + "\n" +
                 "temperature: " + (int) model.getMain().getTemp() + " C" + "\n" +
@@ -56,28 +61,49 @@ public class WeatherAccess<T> {
         URL url;
 
         if (objectType instanceof Message) {
-            System.out.println("message");
+//            System.out.println("message");
             url = getUrlForText(((Message) objectType).getText().toLowerCase());
 
         } else if (objectType instanceof Location) {
             float latitude = ((Location) objectType).getLatitude();
             float longitude = ((Location) objectType).getLongitude();
 
-            System.out.println("location data: " + latitude + " : " + longitude + "\n");
+//            System.out.println("location data: " + latitude + " : " + longitude + "\n");
 
             url = getUrlForLocation(latitude, longitude);
         } else {
             return null;
         }
 
-        // scanner reads file.json content
-        Scanner in = new Scanner((InputStream) url.getContent());
-        String result = "";
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        connection.setRequestMethod("GET");
+        connection.setRequestProperty("User-Agent", "Mozilla/5.0");
 
-        while (in.hasNext()) {
-            result = result.concat(in.nextLine());
+        int responseCode = connection.getResponseCode();
+        if (responseCode == 404)
+            throw new IllegalArgumentException();
+
+        StringBuffer response;
+        try (BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
+            response = new StringBuffer();
+
+            String line;
+            while ((line = in.readLine()) != null) {
+                response.append(line);
+            }
         }
-        return result;
+
+        return response.toString();
+
+
+        // scanner reads file.json content
+//        Scanner in = new Scanner((InputStream) url.getContent());
+//        String result = "";
+
+//        while (in.hasNext()) {
+//            result = result.concat(in.nextLine());
+//        }
+//        return result;
     }
 
     private URL getUrlForLocation(float latitude, float longitude) throws MalformedURLException {

@@ -24,4 +24,6 @@ public interface UserRepo extends CrudRepository<User, Long> {
 
     @Override
     void deleteAll();
+
+    //TODO: дописать метод для выборки по параметру подписчика
 }

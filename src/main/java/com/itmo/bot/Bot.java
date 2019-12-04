@@ -2,7 +2,6 @@ package com.itmo.bot;
 
 import com.itmo.bot.entities.Location;
 import com.itmo.bot.entities.User;
-import com.itmo.bot.services.NotificationService;
 import com.itmo.bot.services.UserService;
 import com.itmo.bot.services.WeatherAccess;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,13 +51,13 @@ public class Bot extends TelegramLongPollingBot {
 
         // retrieve user request
         if (update.hasMessage()) {
-            new Thread(() -> {
+//            new Thread(() -> {
                 Message message = update.getMessage();
 
                 if (message.hasLocation()) {
 
                     location = new Location(message.getLocation().getLatitude(),
-                            message.getLocation().getLatitude());
+                            message.getLocation().getLongitude());
 
                     // check user in database >>
                     registerUser(message);
@@ -79,17 +78,16 @@ public class Bot extends TelegramLongPollingBot {
                         case "/settings":
                             sendMsg(message, "Let's tweak something");
                             break;
-                        case "subscribe": //TODO: fix saving user boolean type
+                        case "subscribe":
                             user = getUserByChatId(message.getChatId());
 
                             if (user != null) {
-                                System.out.println(user);
                                 if (user.isSubscriber()) {
                                     sendMsg(message, "You're already a subscriber");
                                     break;
                                 }
                                 user.setSubscriber(true);
-                                System.out.println("AFTER SET TRUE: " + user);
+                                service.save(user);
                                 sendMsg(message, "User Subscribed");
                             } else {
                                 sendMsg(message, "You need to send your current location first");
@@ -105,8 +103,12 @@ public class Bot extends TelegramLongPollingBot {
                 } else {
                     sendMsg(message, "Something went wrong");
                 }
-            }).start();
+//            }).start();
         }
+    }
+
+    private void subscribeUser(Message message) {
+
     }
 
     private void registerUser(Message message) {
@@ -117,7 +119,7 @@ public class Bot extends TelegramLongPollingBot {
             try {
                 service.save(user);
             } catch (NullPointerException e) {
-                System.out.println("\nService null...again T_T\n" + e.getMessage());
+                e.printStackTrace();
             }
         }
     }
@@ -125,8 +127,7 @@ public class Bot extends TelegramLongPollingBot {
     private User getUserByChatId(Long chatId) {
         for (User u : service.getAll()) {
             if (u.getChatId() == chatId) {
-                System.out.println("\ngetUserByChatId >> " + u);
-                System.out.println("U EXIST");
+                System.out.println("USER EXIST");
                 return u;
             }
         }
@@ -144,7 +145,7 @@ public class Bot extends TelegramLongPollingBot {
     }
 
     // send response back to user
-    public void sendMsg(Message message, String text) {
+    private void sendMsg(Message message, String text) {
         SendMessage sendMessage = new SendMessage();
 
         sendMessage.enableMarkdown(true)
@@ -165,7 +166,7 @@ public class Bot extends TelegramLongPollingBot {
     }
 
     // create keyboard schema for the user
-    public void setButtons(SendMessage sMessage) {
+    private void setButtons(SendMessage sMessage) {
         // initializing the keyboard
         ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();
 
@@ -201,7 +202,7 @@ public class Bot extends TelegramLongPollingBot {
         replyKeyboardMarkup.setKeyboard(listOfButtonRows);
     }
 
-//    @Scheduled(fixedRate = 50000)
+    //    @Scheduled(fixedRate = 50000)
     @Scheduled(cron = "0 0 9 * * *")
     public void sendForecast() throws IOException {
         List<User> users = service.getAll();
